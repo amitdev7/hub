@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   Search,
   ExternalLink,
@@ -32,7 +33,21 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ShareModal } from '@/components/ShareModal';
 import { FilePreviewModal } from '@/components/FilePreviewModal';
 import { ToastProvider } from '@/components/Toast';
-import { MacDesktop } from '@/components/macos/MacDesktop';
+
+const MacDesktop = dynamic(
+  () => import('@/components/macos/MacDesktop').then((mod) => mod.MacDesktop),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-screen h-screen bg-black flex flex-col items-center justify-center text-white select-none">
+        <span className="text-6xl mb-6"></span>
+        <div className="w-48 h-1 bg-white/20 rounded-full overflow-hidden">
+          <div className="h-full bg-white rounded-full animate-pulse w-2/3" />
+        </div>
+      </div>
+    ),
+  }
+);
 
 export default function PublicPortalPage() {
   const [viewMode, setViewMode] = useState<'macos' | 'portal'>('macos');
