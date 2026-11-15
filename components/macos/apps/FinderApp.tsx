@@ -101,15 +101,31 @@ export function FinderApp({ onOpenApp, onPreviewFile }: FinderAppProps) {
       { id: 'dl-3', name: 'Developer-Icons.tar.gz', type: 'file', extension: 'tar.gz', size: '12.8 MB', modified: '2026-11-09' },
     ],
     'StorageHub Drive': storageHubFiles.length
-      ? storageHubFiles.map((f) => ({
-          id: 'sh-' + f.id,
-          name: f.originalName || f.name,
-          type: 'file',
-          extension: f.extension || 'bin',
-          size: f.sizeFormatted || `${Math.round((f.size || 0) / 1024)} KB`,
-          modified: f.createdAt ? f.createdAt.slice(0, 10) : '2026-11-15',
-          url: `/api/files/${f.id}/preview`,
-        }))
+      ? storageHubFiles.map((f: any) => {
+          let modDate = '2026-11-15';
+          if (typeof f.createdAt === 'number') {
+            try {
+              modDate = new Date(f.createdAt).toISOString().slice(0, 10);
+            } catch {
+              modDate = '2026-11-15';
+            }
+          } else if (typeof f.createdAt === 'string') {
+            modDate = f.createdAt.slice(0, 10);
+          }
+
+          const fname = f.filename || f.originalName || f.name || 'Untitled';
+          const ext = fname.includes('.') ? fname.split('.').pop() : (f.extension || 'bin');
+
+          return {
+            id: 'sh-' + f.id,
+            name: fname,
+            type: 'file',
+            extension: ext,
+            size: f.sizeFormatted || `${Math.max(1, Math.round((f.fileSize || f.size || 1024) / 1024))} KB`,
+            modified: modDate,
+            url: `/api/files/${f.id}/preview`,
+          };
+        })
       : [
           { id: 'sh-1', name: 'storagehub-quickstart.pdf', type: 'file', extension: 'pdf', size: '1.2 MB', modified: '2026-11-15' },
           { id: 'sh-2', name: 'brand-banner.png', type: 'file', extension: 'png', size: '3.4 MB', modified: '2026-11-14' },
