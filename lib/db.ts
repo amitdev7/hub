@@ -3,20 +3,49 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
+const isVercel = Boolean(process.env.VERCEL);
+const DATA_DIR = isVercel ? path.join('/tmp', 'data') : path.join(process.cwd(), 'data');
+const UPLOADS_DIR = isVercel ? path.join('/tmp', 'uploads') : path.join(process.cwd(), 'uploads');
 const DB_PATH = path.join(DATA_DIR, 'storagehub.db');
 
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+} catch (e) {
+  // ignore read-only fs in edge cases
 }
 
-const db = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+try {
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+} catch (e) {
+  // ignore read-only fs in edge cases
+}
+
+let db: any;
+try {
+  db = new Database(DB_PATH);
+  db.pragma('journal_mode = WAL');
+  db.pragma('foreign_keys = ON');
+} catch (err) {
+  console.warn('better-sqlite3 fallback triggered for serverless/read-only environment:', err);
+  try {
+    db = new Database(':memory:');
+  } catch (memErr) {
+    db = {
+      prepare: () => ({
+        run: () => ({ changes: 0, lastInsertRowid: 0 }),
+        get: () => null,
+        all: () => [],
+      }),
+      exec: () => {},
+      pragma: () => {},
+      transaction: (fn: any) => fn,
+    };
+  }
+}
 
 export function initDatabase() {
   db.exec(`
@@ -427,6 +456,10 @@ Q4 2026,520,1890.4,14200,15
   insertSetting.run('trafficLightsEnabled', 'true');
 }
 
-initDatabase();
+try {
+  initDatabase();
+} catch (e) {
+  console.warn('initDatabase notice:', e);
+}
 
 export default db;

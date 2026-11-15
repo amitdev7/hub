@@ -4,10 +4,15 @@ import crypto from 'crypto';
 import { categorizeFile, sanitizeFilename } from './utils';
 import { FileCategory } from './types';
 
-const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
+const isVercel = Boolean(process.env.VERCEL);
+const UPLOADS_DIR = isVercel ? path.join('/tmp', 'uploads') : path.join(process.cwd(), 'uploads');
 
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+try {
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+} catch (e) {
+  // ignore read-only fs in edge cases
 }
 
 export interface SavedFileResult {
