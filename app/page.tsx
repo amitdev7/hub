@@ -33,27 +33,78 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ShareModal } from '@/components/ShareModal';
 import { FilePreviewModal } from '@/components/FilePreviewModal';
 import { ToastProvider } from '@/components/Toast';
+import MacDesktop from '@/components/macos/MacDesktop';
 
-const MacDesktop = dynamic(
-  () => import('@/components/macos/MacDesktop').then((mod) => mod.MacDesktop),
-  {
-    ssr: false,
-    loading: () => (
+class MacDesktopErrorBoundary extends React.Component<
+  { children: React.ReactNode; onSwitchToPortal: () => void },
+  { hasError: boolean; error: string }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: '' };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error: error?.message || 'Desktop initialization recovered' };
+  }
+
+  componentDidCatch(error: any, errorInfo: React.ErrorInfo) {
+    console.error('macOS Simulator error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="w-screen h-screen bg-[#111119] text-white flex flex-col items-center justify-center p-6 text-center select-none">
+          <span className="text-6xl mb-4"></span>
+          <h2 className="text-xl font-bold mb-2">macOS Operating System Recovery</h2>
+          <p className="text-xs text-white/50 mb-6 max-w-md font-mono">{this.state.error}</p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => this.setState({ hasError: false, error: '' })}
+              className="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-500 transition shadow-lg text-sm"
+            >
+              Reboot macOS
+            </button>
+            <button
+              onClick={this.props.onSwitchToPortal}
+              className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white font-medium transition text-sm"
+            >
+              Open Classic StorageHub
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function PublicPortalPage() {
+  const [mounted, setMounted] = useState(false);
+  const [viewMode, setViewMode] = useState<'macos' | 'portal'>('macos');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
       <div className="w-screen h-screen bg-black flex flex-col items-center justify-center text-white select-none">
         <span className="text-6xl mb-6"></span>
         <div className="w-48 h-1 bg-white/20 rounded-full overflow-hidden">
           <div className="h-full bg-white rounded-full animate-pulse w-2/3" />
         </div>
       </div>
-    ),
+    );
   }
-);
-
-export default function PublicPortalPage() {
-  const [viewMode, setViewMode] = useState<'macos' | 'portal'>('macos');
 
   if (viewMode === 'macos') {
-    return <MacDesktop onSwitchToPortal={() => setViewMode('portal')} />;
+    return (
+      <MacDesktopErrorBoundary onSwitchToPortal={() => setViewMode('portal')}>
+        <MacDesktop onSwitchToPortal={() => setViewMode('portal')} />
+      </MacDesktopErrorBoundary>
+    );
   }
 
   return (

@@ -422,7 +422,7 @@ export function MacDesktop({ onSwitchToPortal }: MacDesktopProps) {
         return (
           <MacWindow
             key={win.id}
-            window={win}
+            win={win}
             isActive={isActive}
             onFocus={() => handleFocusWindow(win.id)}
             onClose={() => handleCloseWindow(win.id)}
@@ -580,3 +580,5 @@ export function MacDesktop({ onSwitchToPortal }: MacDesktopProps) {
     </div>
   );
 }
+
+export default MacDesktop;

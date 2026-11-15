@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, Minus, Maximize2, Minimize2 } from 'lucide-react';
 import { WindowState } from './types';
 import { playSound } from './useSound';
 
 interface MacWindowProps {
-  window: WindowState;
+  win: WindowState;
   isActive: boolean;
   onFocus: () => void;
   onClose: () => void;
@@ -18,7 +18,7 @@ interface MacWindowProps {
 }
 
 export function MacWindow({
-  window,
+  win,
   isActive,
   onFocus,
   onClose,
@@ -62,22 +62,24 @@ export function MacWindow({
     if ((e.target as HTMLElement).closest('.traffic-btn')) return;
     onFocus();
 
-    if (window.isMaximized) return;
+    if (win.isMaximized) return;
 
     dragRef.current = {
       isDragging: true,
       startX: e.clientX,
       startY: e.clientY,
-      initX: window.x,
-      initY: window.y,
+      initX: win.x,
+      initY: win.y,
     };
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!dragRef.current.isDragging) return;
       const dx = moveEvent.clientX - dragRef.current.startX;
       const dy = moveEvent.clientY - dragRef.current.startY;
-      const nextX = Math.max(0, Math.min(globalThis.innerWidth - 100, dragRef.current.initX + dx));
-      const nextY = Math.max(28, Math.min(globalThis.innerHeight - 80, dragRef.current.initY + dy));
+      const screenW = typeof window !== 'undefined' ? window.innerWidth : 1200;
+      const screenH = typeof window !== 'undefined' ? window.innerHeight : 800;
+      const nextX = Math.max(0, Math.min(screenW - 100, dragRef.current.initX + dx));
+      const nextY = Math.max(28, Math.min(screenH - 80, dragRef.current.initY + dy));
       onUpdatePosition(nextX, nextY);
     };
 
@@ -95,25 +97,25 @@ export function MacWindow({
   const handleMouseDownResize = (e: React.MouseEvent, edge: string) => {
     e.stopPropagation();
     onFocus();
-    if (window.isMaximized) return;
+    if (win.isMaximized) return;
 
     resizeRef.current = {
       isResizing: true,
       edge,
       startX: e.clientX,
       startY: e.clientY,
-      initW: window.width,
-      initH: window.height,
-      initX: window.x,
-      initY: window.y,
+      initW: win.width,
+      initH: win.height,
+      initX: win.x,
+      initY: win.y,
     };
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!resizeRef.current.isResizing) return;
       const dx = moveEvent.clientX - resizeRef.current.startX;
       const dy = moveEvent.clientY - resizeRef.current.startY;
-      const minW = window.minWidth || 360;
-      const minH = window.minHeight || 260;
+      const minW = win.minWidth || 360;
+      const minH = win.minHeight || 260;
 
       let newW = resizeRef.current.initW;
       let newH = resizeRef.current.initH;
@@ -138,7 +140,7 @@ export function MacWindow({
       }
 
       onUpdateSize(newW, newH);
-      if (newX !== window.x || newY !== window.y) {
+      if (newX !== win.x || newY !== win.y) {
         onUpdatePosition(newX, newY);
       }
     };
@@ -153,24 +155,24 @@ export function MacWindow({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
-  if (window.isMinimized) return null;
+  if (win.isMinimized) return null;
 
-  const style: React.CSSProperties = window.isMaximized
+  const style: React.CSSProperties = win.isMaximized
     ? {
         position: 'fixed',
         left: 0,
         top: 28,
         width: '100vw',
         height: 'calc(100vh - 28px - 72px)',
-        zIndex: window.zIndex,
+        zIndex: win.zIndex,
       }
     : {
         position: 'fixed',
-        left: window.x,
-        top: window.y,
-        width: window.width,
-        height: window.height,
-        zIndex: window.zIndex,
+        left: win.x,
+        top: win.y,
+        width: win.width,
+        height: win.height,
+        zIndex: win.zIndex,
       };
 
   return (
@@ -236,7 +238,7 @@ export function MacWindow({
             title="Zoom"
           >
             {isHoveredTraffic && (
-              window.isMaximized ? (
+              win.isMaximized ? (
                 <Minimize2 className="w-2 h-2 text-black/70 stroke-[3]" />
               ) : (
                 <Maximize2 className="w-2 h-2 text-black/70 stroke-[3]" />
@@ -247,8 +249,8 @@ export function MacWindow({
 
         {/* Window Title & Icon */}
         <div className="flex items-center gap-1.5 text-xs font-semibold truncate max-w-xs pointer-events-none">
-          {window.icon && <img src={window.icon} alt="" className="w-3.5 h-3.5 object-contain" />}
-          <span>{window.title}</span>
+          {win.icon && <img src={win.icon} alt="" className="w-3.5 h-3.5 object-contain" />}
+          <span>{win.title}</span>
         </div>
 
         {/* Right header spacer */}
@@ -260,40 +262,40 @@ export function MacWindow({
         {children}
       </div>
 
-      {/* Resize handles (8 directions) */}
-      {!window.isMaximized && (
+      {/* Resize handles */}
+      {!win.isMaximized && (
         <>
           <div
-            onMouseDown={(e) => handleMouseDownResize(e, 't')}
-            className="absolute top-0 left-2 right-2 h-1 cursor-ns-resize"
+            onMouseDown={(e) => handleMouseDownResize(e, 'r')}
+            className="absolute top-0 right-0 w-1.5 h-full cursor-e-resize"
           />
           <div
             onMouseDown={(e) => handleMouseDownResize(e, 'b')}
-            className="absolute bottom-0 left-2 right-2 h-1 cursor-ns-resize"
+            className="absolute bottom-0 left-0 w-full h-1.5 cursor-s-resize"
           />
           <div
             onMouseDown={(e) => handleMouseDownResize(e, 'l')}
-            className="absolute top-2 bottom-2 left-0 w-1 cursor-ew-resize"
+            className="absolute top-0 left-0 w-1.5 h-full cursor-w-resize"
           />
           <div
-            onMouseDown={(e) => handleMouseDownResize(e, 'r')}
-            className="absolute top-2 bottom-2 right-0 w-1 cursor-ew-resize"
+            onMouseDown={(e) => handleMouseDownResize(e, 't')}
+            className="absolute top-0 left-0 w-full h-1.5 cursor-n-resize"
           />
           <div
-            onMouseDown={(e) => handleMouseDownResize(e, 'tl')}
-            className="absolute top-0 left-0 w-2.5 h-2.5 cursor-nwse-resize"
+            onMouseDown={(e) => handleMouseDownResize(e, 'rb')}
+            className="absolute bottom-0 right-0 w-3 h-3 cursor-se-resize"
           />
           <div
-            onMouseDown={(e) => handleMouseDownResize(e, 'tr')}
-            className="absolute top-0 right-0 w-2.5 h-2.5 cursor-nesw-resize"
+            onMouseDown={(e) => handleMouseDownResize(e, 'lb')}
+            className="absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize"
           />
           <div
-            onMouseDown={(e) => handleMouseDownResize(e, 'bl')}
-            className="absolute bottom-0 left-0 w-2.5 h-2.5 cursor-nesw-resize"
+            onMouseDown={(e) => handleMouseDownResize(e, 'rt')}
+            className="absolute top-0 right-0 w-3 h-3 cursor-ne-resize"
           />
           <div
-            onMouseDown={(e) => handleMouseDownResize(e, 'br')}
-            className="absolute bottom-0 right-0 w-2.5 h-2.5 cursor-nwse-resize"
+            onMouseDown={(e) => handleMouseDownResize(e, 'lt')}
+            className="absolute top-0 left-0 w-3 h-3 cursor-nw-resize"
           />
         </>
       )}

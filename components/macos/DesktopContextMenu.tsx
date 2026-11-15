@@ -43,8 +43,10 @@ export function DesktopContextMenu({
   }, [onClose]);
 
   // Adjust menu coordinates so it doesn't clip screen edge
-  const posX = Math.min(x, globalThis.innerWidth - 240);
-  const posY = Math.min(y, globalThis.innerHeight - 300);
+  const screenW = typeof window !== 'undefined' ? window.innerWidth : 1200;
+  const screenH = typeof window !== 'undefined' ? window.innerHeight : 800;
+  const posX = Math.max(10, Math.min(x, screenW - 240));
+  const posY = Math.max(30, Math.min(y, screenH - 300));
 
   return (
     <div

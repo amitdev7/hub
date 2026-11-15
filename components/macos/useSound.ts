@@ -5,16 +5,20 @@ let audioCtx: AudioContext | null = null;
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
-  if (!audioCtx) {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (AudioContextClass) {
-      audioCtx = new AudioContextClass();
+  try {
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContextClass) {
+        audioCtx = new AudioContextClass();
+      }
     }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  } catch {
+    return null;
   }
-  if (audioCtx && audioCtx.state === 'suspended') {
-    audioCtx.resume().catch(() => {});
-  }
-  return audioCtx;
 }
 
 export const playSound = {
@@ -39,7 +43,7 @@ export const playSound = {
       osc1.stop(now + 0.04);
 
       // Noise burst (shutter blade)
-      const bufferSize = ctx.sampleRate * 0.05;
+      const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * 0.05));
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const output = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
@@ -49,64 +53,35 @@ export const playSound = {
       noise.buffer = buffer;
       const noiseFilter = ctx.createBiquadFilter();
       noiseFilter.type = 'bandpass';
-      noiseFilter.frequency.value = 2200;
+      noiseFilter.frequency.value = 1800;
+      noiseFilter.Q.value = 1.2;
+
       const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.35, now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+      noiseGain.gain.setValueAtTime(0.35, now + 0.03);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
       noise.connect(noiseFilter);
       noiseFilter.connect(noiseGain);
       noiseGain.connect(ctx.destination);
-      noise.start(now);
+      noise.start(now + 0.03);
+      noise.stop(now + 0.09);
 
-      // 2. Second click (shutter curtain release ~60ms later)
-      const t2 = now + 0.06;
+      // 2. Second click (mirror return)
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
-      osc2.type = 'triangle';
-      osc2.frequency.setValueAtTime(1100, t2);
-      osc2.frequency.exponentialRampToValueAtTime(200, t2 + 0.05);
-      gain2.gain.setValueAtTime(0.35, t2);
-      gain2.gain.exponentialRampToValueAtTime(0.001, t2 + 0.05);
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(1200, now + 0.09);
+      osc2.frequency.exponentialRampToValueAtTime(200, now + 0.13);
+      gain2.gain.setValueAtTime(0.25, now + 0.09);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
       osc2.connect(gain2);
       gain2.connect(ctx.destination);
-      osc2.start(t2);
-      osc2.stop(t2 + 0.05);
+      osc2.start(now + 0.09);
+      osc2.stop(now + 0.13);
     } catch {}
   },
 
-  // Trash empty swoosh
-  trash: () => {
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      const now = ctx.currentTime;
-      const duration = 0.35;
-      const bufferSize = ctx.sampleRate * duration;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.12));
-      }
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(3000, now);
-      filter.frequency.exponentialRampToValueAtTime(400, now + duration);
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.4, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-      noise.start(now);
-    } catch {}
-  },
-
-  // Mac Tink sound (subtle click)
+  // Apple Tink click sound
   tink: () => {
     try {
       const ctx = getAudioContext();
@@ -115,17 +90,18 @@ export const playSound = {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(1760, now); // A6
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.frequency.setValueAtTime(1600, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.06);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.08);
+      osc.stop(now + 0.06);
     } catch {}
   },
 
-  // Mac Pop sound (dock hover / tap)
+  // Apple Pop click
   pop: () => {
     try {
       const ctx = getAudioContext();
@@ -134,14 +110,43 @@ export const playSound = {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(400, now);
-      osc.frequency.exponentialRampToValueAtTime(800, now + 0.04);
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(240, now + 0.08);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.05);
+      osc.stop(now + 0.08);
+    } catch {}
+  },
+
+  // Trash Empty swoosh
+  trash: () => {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * 0.18));
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1200, now);
+      filter.frequency.exponentialRampToValueAtTime(200, now + 0.18);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start(now);
+      noise.stop(now + 0.18);
     } catch {}
   },
 
@@ -168,9 +173,11 @@ export const playSound = {
   // Mac Startup Chime
   startup: () => {
     try {
-      const audio = new Audio('/sounds/mac-startup-sound.mp3');
-      audio.volume = 0.6;
-      audio.play().catch(() => {});
+      if (typeof Audio !== 'undefined') {
+        const audio = new Audio('/sounds/mac-startup-sound.mp3');
+        audio.volume = 0.6;
+        audio.play().catch(() => {});
+      }
     } catch {}
   },
 };

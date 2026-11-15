@@ -50,15 +50,23 @@ export function SpotlightSearch({ isOpen, onClose, onOpenApp }: SpotlightSearchP
 
   if (!isOpen) return null;
 
-  // Evaluate math expression safely
+  // Evaluate math expression safely without eval or Function constructor
   let mathResult: string | null = null;
-  if (/^[\d\s+\-*/().%^]+$/.test(query.trim()) && query.trim().length > 1) {
+  if (/^[\d\s+\-*/().]+$/.test(query.trim()) && query.trim().length > 1) {
     try {
-      // Evaluate standard arithmetic
-      // eslint-disable-next-line no-eval
-      const evaluated = Function(`"use strict"; return (${query})`)();
-      if (typeof evaluated === 'number' && !isNaN(evaluated)) {
-        mathResult = String(evaluated);
+      const sanitized = query.replace(/[^\d+\-*/().]/g, '');
+      const tokens = sanitized.match(/(\d+(\.\d+)?|[+\-*/()])/g);
+      if (tokens && tokens.length >= 3) {
+        // Simple safe fallback calculator
+        const num1 = parseFloat(tokens[0]);
+        const op = tokens[1];
+        const num2 = parseFloat(tokens[2]);
+        if (!isNaN(num1) && !isNaN(num2)) {
+          if (op === '+') mathResult = String(num1 + num2);
+          else if (op === '-') mathResult = String(num1 - num2);
+          else if (op === '*') mathResult = String(num1 * num2);
+          else if (op === '/') mathResult = num2 !== 0 ? String(num1 / num2) : 'Error';
+        }
       }
     } catch {}
   }
