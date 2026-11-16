@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUser(req);
     const { id } = await params;
     const file = db.prepare('SELECT * FROM files WHERE id = ?').get(id) as any;
 
