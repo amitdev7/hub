@@ -4,8 +4,12 @@ import { destroySession } from '@/lib/auth';
 export async function POST() {
   try {
     await destroySession();
-    return NextResponse.json({ success: true });
+    const response = NextResponse.json({ success: true });
+    response.cookies.delete('storagehub_session');
+    return response;
   } catch (err: any) {
-    return NextResponse.json({ error: 'Failed to logout' }, { status: 500 });
+    const response = NextResponse.json({ success: true });
+    response.cookies.delete('storagehub_session');
+    return response;
   }
 }

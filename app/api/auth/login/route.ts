@@ -25,10 +25,10 @@ export async function POST(req: NextRequest) {
     }
 
     const token = createSession(user.id);
-    await setSessionCookie(token);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
+      token,
       user: {
         id: user.id,
         username: user.username,
@@ -38,6 +38,16 @@ export async function POST(req: NextRequest) {
         role: user.role,
       },
     });
+
+    response.cookies.set('storagehub_session', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60,
+    });
+
+    return response;
   } catch (error: any) {
     console.error('Login error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
