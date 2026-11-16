@@ -359,6 +359,27 @@ class StorageEngine {
       updated_at: now,
     });
 
+    this.resources.set('res-private-0009', {
+      id: 'res-private-0009',
+      title: 'Internal Admin Workstation Notes',
+      url: 'https://internal.storagehub.local/notes',
+      description: 'Private workstation telemetry and internal infrastructure credentials',
+      icon: 'Lock',
+      thumbnail: null,
+      resource_type: 'link',
+      category: 'Tools',
+      collection_id: col2,
+      visibility: 'private',
+      is_favorite: 1,
+      is_pinned: 1,
+      display_order: 7,
+      file_id: null,
+      click_count: 5,
+      tags: JSON.stringify(['Private', 'Internal', 'Ops']),
+      created_at: now,
+      updated_at: now,
+    });
+
     this.app_settings.set('siteTitle', 'StorageHub Command Center');
     this.app_settings.set('siteDescription', 'A unified digital command center for files, curated links, and essential resources.');
     this.app_settings.set('ownerName', 'Peter Parker');

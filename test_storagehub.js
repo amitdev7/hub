@@ -1,5 +1,5 @@
 // Automated End-to-End Functional Verification Suite for StorageHub
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || 'https://zenithsuihub.vercel.app';
 
 async function runTests() {
   console.log('====================================================');
