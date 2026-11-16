@@ -632,6 +632,11 @@ export const db = {
           const f = engine.files.get(id);
           return f ? { stored_filename: f.stored_filename, filename: f.filename } : null;
         }
+        // SELECT * FROM users WHERE id = ?
+        if (upper.includes('FROM USERS WHERE ID = ?')) {
+          const [id] = args;
+          return engine.users.get(id) || null;
+        }
         // SELECT * FROM users WHERE username = ? OR email = ?
         if (upper.includes('FROM USERS WHERE USERNAME = ? OR EMAIL = ?')) {
           const [ident1, ident2] = args;

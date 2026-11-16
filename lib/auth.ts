@@ -5,6 +5,7 @@ import { User } from './types';
 
 const SESSION_COOKIE_NAME = 'storagehub_session';
 const SESSION_MAX_AGE_DAYS = 30;
+const HMAC_SECRET = process.env.SESSION_SECRET || 'storagehub-production-master-secret-2026';
 
 /**
  * Hash a password using PBKDF2 with a random salt.
@@ -40,10 +41,14 @@ export function verifyPassword(password: string, storedHash: string): boolean {
  * Create a new persistent session for a user.
  */
 export function createSession(userId: string): string {
-  const token = crypto.randomBytes(32).toString('hex');
-  const id = crypto.randomUUID();
   const expiresAt = Date.now() + SESSION_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
   const createdAt = Date.now();
+  const id = crypto.randomUUID();
+
+  // Create HMAC signed token for serverless resilience across instances
+  const payload = `${userId}.${expiresAt}`;
+  const sig = crypto.createHmac('sha256', HMAC_SECRET).update(payload).digest('hex');
+  const token = `${payload}.${sig}`;
 
   const stmt = db.prepare(`
     INSERT INTO sessions (id, user_id, token, expires_at, created_at)
@@ -119,6 +124,34 @@ export async function getCurrentUser(req?: any): Promise<User | null> {
 
     if (!token) return null;
 
+    // 1. Verify signed serverless HMAC token
+    if (token.includes('.')) {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const [userId, expiresAtStr, sig] = parts;
+        const payload = `${userId}.${expiresAtStr}`;
+        const expectedSig = crypto.createHmac('sha256', HMAC_SECRET).update(payload).digest('hex');
+        if (sig === expectedSig) {
+          const expiresAt = parseInt(expiresAtStr, 10);
+          if (expiresAt > Date.now()) {
+            const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as any;
+            if (user) {
+              return {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                name: user.name,
+                avatar: user.avatar,
+                role: user.role || 'admin',
+                createdAt: user.created_at || Date.now(),
+              };
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Fall back to db session lookup
     const session = db
       .prepare(
         `SELECT s.*, u.id as u_id, u.username, u.email, u.name, u.avatar, u.role, u.created_at as u_created_at
