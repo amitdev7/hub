@@ -131,13 +131,13 @@ export async function getCurrentUser(req?: any): Promise<User | null> {
     if (!session) return null;
 
     return {
-      id: session.u_id,
-      username: session.username,
-      email: session.email,
-      name: session.name,
-      avatar: session.avatar,
+      id: session.u_id || session.id || session.user_id,
+      username: session.username || 'admin',
+      email: session.email || 'admin@storagehub.local',
+      name: session.name || 'Peter Parker',
+      avatar: session.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
       role: session.role || 'admin',
-      createdAt: session.u_created_at,
+      createdAt: session.u_created_at || session.created_at || Date.now(),
     };
   } catch (err) {
     console.error('getCurrentUser error:', err);

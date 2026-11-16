@@ -624,7 +624,15 @@ export const db = {
           const [token, now] = args;
           const s = engine.sessions.get(token);
           if (s && s.expires_at > (now || Date.now())) {
-            return engine.users.get(s.user_id) || null;
+            const u = engine.users.get(s.user_id);
+            if (u) {
+              return {
+                ...s,
+                ...u,
+                u_id: u.id,
+                u_created_at: u.created_at,
+              };
+            }
           }
           return null;
         }
