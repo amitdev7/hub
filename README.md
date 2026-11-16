@@ -1,143 +1,131 @@
-# StorageHub — Premium Digital Resource Command Center
+# Web simulation of MacOS
+![preview0](preview/preview.png)
+![preview0](preview/preview0.png)
+![preview0](preview/prev.png)
+![preview1](preview/preview1.png)
 
-StorageHub is an enterprise-grade, full-stack digital resource launcher and command center built with **Next.js 16**, **React 18/19**, **TypeScript**, and **Tailwind CSS**, designed with an **Apple macOS × Stripe** visual aesthetic, **Arc** navigation, **Dropbox** file management, and **Raycast** quick access.
 
----
-
-## ✨ Features
-
-- **Apple macOS Visual Design**: Authentic macOS window frame with functional red, yellow, and green traffic light controls, acrylic frosted glass surfaces (`backdrop-blur-2xl`), refined rounded corners (`rounded-2xl`), and a floating bottom magnification Dock.
-- **Dual Connected Surfaces**:
-  - **Private Command Center (`/admin`)**: Authenticated administrative dashboard featuring Kanban Taskboard view, Resource Grid, My Files manager, Collections organizer, Starred Favorites, and Real-time Activity Audit logs.
-  - **Public Resource Portal (`/`)**: High-aesthetic visitor-facing launcher showcasing public links, documents, search, collection pills, and QR code mobile sharing.
-- **Drag-and-Drop Card Reordering**: Interactive reordering powered by `@dnd-kit` with atomic persistence to SQLite.
-- **Raycast-Grade Command Palette (`⌘K` / `Ctrl+K`)**: Instant fuzzy search across resources, files, and collections with keyboard shortcuts and quick creation actions.
-- **Dropbox-Inspired File Storage**:
-  - Real persistent disk storage (`uploads/`).
-  - Multi-file drag-and-drop upload dropzone with progress tracking.
-  - In-browser file previewer supporting **PDF**, high-res **Images**, **Audio/Video**, and **Code/CSV/Text**.
-  - Direct streaming downloads with safe `Content-Disposition` attachments and MIME sniffing protection.
-- **Multi-Resource Support**: Web links, hosted file downloads, YouTube embeds, Google Drive assets, `mailto:` email dispatchers, `tel:` helplines, and device-specific local workstation references (`file:///...`).
-- **Granular Privacy & Visibility Isolation**: Configure resources and files as either `Public` (visible on the public portal) or `Private` (strictly accessible only to the authenticated administrator).
-- **Persistent SQLite Database (`data/storagehub.db`)**: High-performance SQLite engine with WAL mode and zero external daemon requirements.
-- **Cryptographic Security**: PBKDF2 password hashing with random 16-byte salt, secure HTTP-only session cookies, and path traversal protection.
-- **Light & Space Dark Themes**: Theme switching with CSS variable mapping.
+A fully interactive macOS-style web simulator built with React — complete with a start up and setup screens, boot sequence, lock screen, desktop environment, draggable app windows, a working dock, and real macOS UI polish.
 
 ---
 
-## 🚀 Quick Start
+## Features
 
-### 1. Prerequisites
-- **Node.js**: v18.0.0 or later (v22+ recommended)
-- **npm**: v9+
+- **Boot & Lock Screen** — Power-on animation, lock screen with clock, swipe-to-unlock, and auto-lock after 1 minute of inactivity
+- **Editable Lock Screen Profile** — Click the avatar or name on the lock screen to upload a custom photo and rename the user; persisted in localStorage
+- **Desktop Environment** — Draggable/resizable windows, right-click context menu, desktop folders and file creation
+- **Dock** — Animated magnification effect on hover, app open/minimize indicators, bounce animation on launch
+- **Top Bar** — Dynamic app title, Apple menu with lock/sleep/shutdown, dropdown menus, live clock
+- **Finder** — Simulated file system with Downloads, Desktop, Documents, and Pictures folders; grid/list view
+- **Safari** — Built-in browser with navigation controls
+- **Terminal** — Functional terminal emulator
+- **Photos / Gallery** — Image gallery with wallpaper setting support
+- **Notes** — Apple Notes-style app with iCloud folders, tags, search, and a full editor; auto-saves to localStorage
+- **Music / Spotify** — Spotify-integrated music player
+- **Settings** — macOS System Settings replica with About This Mac overview
+- **Wallpaper Customization** — Change desktop and lock screen wallpapers from the Gallery app
 
-### 2. Installation
+---
+
+## Tech Stack
+
+| Technology | Purpose |
+|---|---|
+| React 19 | UI framework |
+| Vite 7 | Build tool & dev server |
+| Tailwind CSS 4 | Styling |
+| Framer Motion | Animations |
+| GSAP | Advanced animations |
+| Radix UI | Accessible UI primitives |
+| React RND | Draggable/resizable windows |
+| React Spring | Spring-based animations |
+| Lucide React | Icons |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+
+### Installation
+
 ```bash
-git clone <repository-url> StorageHub
-cd StorageHub
+git clone https://github.com/LikhithSP/MacOS-Web-Simulator.git
+cd MacOS-Web-Simulator
 npm install
 ```
 
-### 3. Environment Setup
-The application includes a ready-to-run `.env` file. You can adjust default credentials if desired:
-```env
-PORT=3000
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=adminpassword123
-ADMIN_EMAIL=admin@storagehub.local
-ADMIN_NAME=Peter Parker
-SESSION_SECRET=storagehub_super_secret_session_key_production_grade_998877
-NEXT_PUBLIC_APP_NAME="StorageHub"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-```
+### Development
 
-### 4. Build and Run
 ```bash
-# Build for production
-npm run build
-
-# Start production server
-npm start
-```
-Open **[http://localhost:3000](http://localhost:3000)** in your browser.
-
----
-
-## 🔐 Default Credentials
-
-- **Username / Email:** `admin` (or `admin@storagehub.local`)
-- **Password:** `adminpassword123`
-- **Admin Login Route:** [http://localhost:3000/admin/login](http://localhost:3000/admin/login)
-
----
-
-## 📂 Project Architecture
-
-```
-StorageHub/
-├── app/
-│   ├── page.tsx                      # Public-Facing Visitor Portal
-│   ├── layout.tsx                    # Root layout with theme hydration
-│   ├── globals.css                   # macOS glassmorphism & Stripe tokens
-│   ├── admin/
-│   │   ├── layout.tsx                # macOS Window Container & Dock wrapper
-│   │   ├── page.tsx                  # Command Center Overview (Taskboard & KPIs)
-│   │   ├── resources/page.tsx        # All Links & Drag-and-Drop Reordering
-│   │   ├── files/page.tsx            # File Management & Storage System
-│   │   ├── collections/page.tsx      # Collections & Folders Manager
-│   │   ├── favorites/page.tsx        # Starred Favorites
-│   │   ├── recent/page.tsx           # Activity Audit History & Clear History
-│   │   ├── appearance/page.tsx       # macOS Themes & Accent Colors
-│   │   ├── settings/page.tsx         # Site Settings, Profile, JSON Backup
-│   │   └── login/page.tsx            # macOS Glassmorphism Admin Login
-│   └── api/
-│       ├── auth/                     # login, logout, me
-│       ├── resources/                # CRUD, reorder, click tracking
-│       ├── collections/              # CRUD, reorder
-│       ├── files/                    # list, upload, preview, download, delete
-│       ├── search/                   # global multi-entity fuzzy search
-│       ├── activity/                 # audit logs, clear
-│       └── settings/                 # app configuration
-├── components/
-│   ├── CommandPalette.tsx            # Raycast cmdk menu (⌘K)
-│   ├── MacWindowFrame.tsx            # Traffic lights & title bar
-│   ├── MacSidebar.tsx                # Frosted glass floating sidebar
-│   ├── MacDock.tsx                   # Bottom magnification desktop dock
-│   ├── ResourceCard.tsx              # Draggable card with tags & context menu
-│   ├── FileCard.tsx                  # File card with type icon & downloads
-│   ├── FilePreviewModal.tsx          # Multi-format preview modal (PDF/Img/Code)
-│   ├── FileUploadModal.tsx           # Multi-file dropzone with progress
-│   ├── ResourceFormModal.tsx         # Resource create & edit dialog
-│   ├── CollectionFormModal.tsx       # Collection create & edit dialog
-│   ├── ShareModal.tsx                # QR code generator & copy link
-│   ├── ThemeToggle.tsx               # Sun/Moon theme switcher
-│   └── Toast.tsx                     # Toast notifications
-├── lib/
-│   ├── db.ts                         # SQLite schema, WAL mode, idempotent seeds
-│   ├── auth.ts                       # PBKDF2 hashing & session management
-│   ├── file-storage.ts               # Disk storage helpers & path sanitization
-│   ├── types.ts                      # Full TypeScript interfaces
-│   └── utils.ts                      # Formatters, byte calculation, MIME helpers
-├── data/                             # Persistent SQLite storage (storagehub.db)
-└── uploads/                          # Persistent disk storage for uploaded files
+npm run dev
 ```
 
----
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-## 🧪 Testing
+--- 
 
-StorageHub comes with an automated test suite verifying all 20 requirements:
+### Want to Contribute?
+
+Contributions are welcome! 🚀
+
+1. Fork the repository  
+2. Create your feature branch
+
 ```bash
-node test_storagehub.js
+git checkout -b feature/your-feature-name
 ```
-Expected output:
+
+3. Commit your changes
+
+```bash
+git commit -m "Add: your feature"
 ```
-====================================================
-TEST RESULTS: 21 PASSED, 0 FAILED
-====================================================
+
+4. Push to the branch
+
+```bash
+git push origin feature/your-feature-name
+```
+
+5. Open a Pull Request
+
+
+
+## Project Structure
+
+```
+src/
+├── App.jsx               # Root component, boot/lock/desktop stage manager
+├── app/                  # Individual macOS apps
+│   ├── Finder.jsx        # File manager
+│   ├── Safari.jsx        # Web browser
+│   ├── Terminal.jsx      # Terminal emulator
+│   ├── Spotify.jsx       # Music player
+│   ├── Gallary.jsx       # Photo gallery
+│   ├── Settings.jsx      # System settings
+│   ├── Trash.jsx         # Trash bin
+│   └── Blogs/
+│       └── BlogsSection.jsx  # Notes app
+
+├── components/           # Shared UI components
+│   ├── AppWindow.jsx     # Draggable/resizable window shell
+│   ├── Dock.jsx          # macOS dock
+│   ├── TopBar.jsx        # Menu bar
+│   └── ContextMenu.jsx   # Right-click menu
+├── layouts/
+│   ├── DesktopWindow.jsx # Desktop environment
+│   ├── LockScreen.jsx    # Lock screen
+│   └── PowerScreen.jsx   # Boot/power screen
+└── store/
+    └── Appstore.js       # Window management store
 ```
 
 ---
 
-## 📜 License
-MIT License.
+## License
+
+MIT
